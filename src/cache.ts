@@ -139,7 +139,7 @@ export async function restoreCache(
 
         try {
           await cacheHttpClient.downloadCache(
-            cacheEntry.provider,
+            's3',
             cacheEntry.s3?.pre_signed_url,
             archivePath
           )
@@ -270,7 +270,7 @@ export async function restoreCache(
 
         try {
           await cacheHttpClient.downloadCache(
-            cacheEntry.provider,
+            'azure_blob',
             cacheEntry.azure_blob?.pre_signed_url,
             archivePath
           )
