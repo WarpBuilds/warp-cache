@@ -397,7 +397,7 @@ async function commitCache(
     cache_version: cacheVersion,
     upload_key: uploadKey,
     upload_id: uploadID,
-    parts: parts,
+    parts,
     vcs_type: 'github',
     vcs_repository: getVCSRepository(),
     vcs_ref: getVCSRef(),

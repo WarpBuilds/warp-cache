@@ -123,10 +123,11 @@ export async function restoreCache(
     )
     core.debug(`Archive Path: ${archivePath}`)
 
-    let cacheKey = cacheEntry?.cache_entry?.cache_user_given_key ?? primaryKey
+    const cacheKey = cacheEntry?.cache_entry?.cache_user_given_key ?? primaryKey
 
     switch (cacheEntry.provider) {
-      case 's3': {
+      case 's3':
+      case 'r2': {
         if (!cacheEntry.s3?.pre_signed_url) {
           return undefined
         }
@@ -138,7 +139,7 @@ export async function restoreCache(
 
         try {
           await cacheHttpClient.downloadCache(
-            cacheEntry.provider,
+            's3',
             cacheEntry.s3?.pre_signed_url,
             archivePath
           )
@@ -269,7 +270,7 @@ export async function restoreCache(
 
         try {
           await cacheHttpClient.downloadCache(
-            cacheEntry.provider,
+            'azure_blob',
             cacheEntry.azure_blob?.pre_signed_url,
             archivePath
           )
@@ -413,6 +414,7 @@ export async function saveCache(
 
     switch (reserveCacheResponse.result?.provider) {
       case 's3':
+      case 'r2':
         core.debug(`Saving Cache to S3`)
         cacheKey = await cacheHttpClient.saveCache(
           's3',
