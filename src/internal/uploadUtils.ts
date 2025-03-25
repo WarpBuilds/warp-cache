@@ -52,6 +52,8 @@ async function uploadChunk(
       PartNumber: partNumber
     }
   } catch (error) {
+    core.debug(JSON.stringify(error))
+    core.debug(JSON.stringify((error as AxiosError).response?.data))
     throw new Error(
       `Cache service responded with ${(error as AxiosError).response
         ?.status} during upload chunk.`
@@ -83,7 +85,7 @@ export async function uploadFileToS3(
     for (let i = 0; i < numberOfChunks; i += concurrency) {
       const batch = preSignedURLs
         .slice(i, i + concurrency)
-        .map((presignedURL, index) => {
+        .map(async (presignedURL, index) => {
           const chunkIndex = i + index
           const chunkSize = Math.ceil(fileSize / numberOfChunks)
           const start = offset
@@ -101,6 +103,7 @@ export async function uploadFileToS3(
                   autoClose: false
                 })
                 .on('error', error => {
+                  core.debug(JSON.stringify(error))
                   throw new Error(
                     `Cache upload failed because file read failed with ${error.message}`
                   )
@@ -139,6 +142,7 @@ export async function multiPartUploadToGCS(
       uploadName: objectName
     })
   } catch (error) {
+    core.debug(JSON.stringify(error))
     throw new Error(`Failed to upload to GCS: ${error}`)
   }
 }
