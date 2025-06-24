@@ -276,12 +276,6 @@ export async function downloadCacheMultiConnection(
               })
           )
 
-          // Add socket timeout for each individual connection
-          downloadResponse.message.socket.setTimeout(SocketTimeout, () => {
-            downloadResponse.message.destroy()
-            core.debug(`Connection ${i} timed out after ${SocketTimeout} ms`)
-          })
-
           const writeStream = fs.createWriteStream(archiveLocation, {
             fd: fileHandle.fd,
             autoClose: false,
