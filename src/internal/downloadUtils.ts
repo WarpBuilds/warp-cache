@@ -414,14 +414,27 @@ export async function downloadCacheHttpClientConcurrent(
     keepAlive: true
   })
   try {
+    // Use Range request to get total file size (works with PresignGetObject URLs)
     const res = await retryHttpClientResponse(
       'downloadCacheMetadata',
-      async () => await httpClient.request('HEAD', archiveLocation, null, {})
+      async () => await httpClient.get(archiveLocation, {Range: 'bytes=0-0'})
     )
 
-    const lengthHeader = res.message.headers['content-length']
-    if (lengthHeader === undefined || lengthHeader === null) {
-      throw new Error('Content-Length not found on blob response')
+    const contentRange = res.message.headers['content-range']
+    if (!contentRange) {
+      throw new Error(
+        'Content-Range header not found - server may not support range requests'
+      )
+    }
+
+    // Parse "bytes 0-0/12345" to get total length (12345)
+    const match = contentRange.match(/bytes \d+-\d+\/(\d+)/)
+    const lengthHeader = match?.[1]
+
+    if (!lengthHeader) {
+      throw new Error(
+        'Could not parse total file size from Content-Range header'
+      )
     }
 
     const length = parseInt(lengthHeader)
@@ -489,6 +502,8 @@ export async function downloadCacheHttpClientConcurrent(
     while (actives > 0) {
       await waitAndWrite()
     }
+
+    progress.stopDisplayTimer()
   } finally {
     httpClient.dispose()
     await archiveDescriptor.close()
@@ -551,7 +566,7 @@ async function downloadSegment(
   }
 }
 
-declare class DownloadSegment {
+interface DownloadSegment {
   offset: number
   count: number
   buffer: Buffer
