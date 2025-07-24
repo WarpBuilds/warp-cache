@@ -23,6 +23,7 @@ import {
 } from './contracts'
 import {
   downloadCacheGCP,
+  downloadCacheHttpClientConcurrent,
   downloadCacheMultiConnection,
   downloadCacheMultipartGCP,
   downloadCacheStreamingGCP
@@ -266,12 +267,15 @@ export async function downloadCache(
   switch (provider) {
     case 's3':
       {
-        const numberOfConnections = 2 + os.cpus().length
-        await downloadCacheMultiConnection(
-          archiveLocation,
-          archivePath,
-          Math.min(numberOfConnections, 30)
-        )
+        // const numberOfConnections = 2 + os.cpus().length
+        // await downloadCacheMultiConnection(
+        //   archiveLocation,
+        //   archivePath,
+        //   Math.min(numberOfConnections, 30)
+        // )
+        await downloadCacheHttpClientConcurrent(archiveLocation, archivePath, {
+          timeoutInMs: 30000
+        })
       }
       break
     case 'gcs': {

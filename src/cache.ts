@@ -144,6 +144,7 @@ export async function restoreCache(
             archivePath
           )
         } catch (error) {
+          core.debug(`Failed to download cache: ${error}`)
           core.info('Cache Miss. Failed to download cache.')
           return undefined
         }
