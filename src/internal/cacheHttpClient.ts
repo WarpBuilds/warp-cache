@@ -113,7 +113,8 @@ export function getCacheVersion(
   enableCrossOsArchive = false,
   enableCrossArchArchive = false
 ): string {
-  const components = paths
+  // be careful not to mutate the path while creating a hash
+  const components = paths.slice()
 
   // Add compression method to cache version to restore
   // compressed cache as per compression method
