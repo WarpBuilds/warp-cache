@@ -49,11 +49,31 @@ test('getCacheVersion with enableCrossOsArchive as false returns version on wind
   }
 })
 
-test('getCacheVersion includes the architecture unless cross-arch is enabled', async () => {
-  const paths = ['node_modules']
+// The default path — cross-arch off — is what nearly every real cache uses,
+// and it puts process.arch in the hash. Pinning per-arch keeps the assertion
+// falsifiable without making it machine-dependent. If these move, every
+// existing cache entry on that architecture becomes unreachable.
+const versionByArch: {[arch: string]: string} = {
+  x64: '4db507e773d235ae08e036b0be97988495ca65afc7d73e7b24b7f681cc177a7c',
+  arm64: 'e75e9f4216900faee512f75905962d331834013fcf62fa550a909626526ec654'
+}
 
-  expect(getCacheVersion(paths, undefined, true, false)).not.toEqual(
-    getCacheVersion(paths, undefined, true, true)
+test('getCacheVersion includes the architecture when cross-arch is off', async () => {
+  const expected = versionByArch[process.arch]
+  if (!expected) {
+    throw new Error(
+      `No pinned cache version for arch "${process.arch}". Add one rather than skipping.`
+    )
+  }
+
+  expect(getCacheVersion(['node_modules'], undefined, true, false)).toEqual(
+    expected
+  )
+})
+
+test('getCacheVersion drops the architecture when cross-arch is on', async () => {
+  expect(getCacheVersion(['node_modules'], undefined, true, true)).not.toEqual(
+    getCacheVersion(['node_modules'], undefined, true, false)
   )
 })
 
