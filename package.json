@@ -40,10 +40,7 @@
   "scripts": {
     "build": "tsc",
     "tsc": "tsc",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "lint": "eslint src/**/*.ts",
-    "format": "prettier --write \"{src,__tests__}/**/*.ts\"",
-    "format-check": "prettier --check \"{src,__tests__}/**/*.ts\"",
+    "test": "jest",
     "audit-moderate": "npm install && npm audit --json --audit-level=moderate > audit.json"
   },
   "bugs": {
