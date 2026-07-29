@@ -22,8 +22,6 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base.js';
 // @ts-ignore
-import { CommonsAppendOperationInput } from '../models/index.js';
-// @ts-ignore
 import { CommonsCacheEntry } from '../models/index.js';
 // @ts-ignore
 import { CommonsCommitCacheRequest } from '../models/index.js';
@@ -50,8 +48,6 @@ import { CommonsListCacheRequest } from '../models/index.js';
 // @ts-ignore
 import { CommonsListCacheResponse } from '../models/index.js';
 // @ts-ignore
-import { CommonsOperation } from '../models/index.js';
-// @ts-ignore
 import { CommonsReserveCacheRequest } from '../models/index.js';
 // @ts-ignore
 import { CommonsReserveCacheResponse } from '../models/index.js';
@@ -63,36 +59,6 @@ import { WarpBuildAPIError } from '../models/index.js';
  */
 export const DefaultApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
-        /**
-         * do ping
-         * @summary pings the api
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        pingGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/ping`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
         /**
          * commit cache
          * @summary commit cache
@@ -325,7 +291,7 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * list cache
+         * list cache entries with pagination, filtering, and sorting
          * @summary list cache
          * @param {CommonsListCacheRequest} body List Cache Request Body
          * @param {*} [options] Override http request option.
@@ -432,42 +398,6 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * record operation
-         * @summary record operation
-         * @param {CommonsAppendOperationInput} body Record Operation details Request Body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1InstrumentationOperationPost: async (body: CommonsAppendOperationInput, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'body' is not null or undefined
-            assertParamExists('v1InstrumentationOperationPost', 'body', body)
-            const localVarPath = `/v1/instrumentation/operation`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -478,18 +408,6 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
 export const DefaultApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = DefaultApiAxiosParamCreator(configuration)
     return {
-        /**
-         * do ping
-         * @summary pings the api
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async pingGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<string>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.pingGet(options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.pingGet']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
         /**
          * commit cache
          * @summary commit cache
@@ -570,7 +488,7 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * list cache
+         * list cache entries with pagination, filtering, and sorting
          * @summary list cache
          * @param {CommonsListCacheRequest} body List Cache Request Body
          * @param {*} [options] Override http request option.
@@ -607,19 +525,6 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['DefaultApi.v1CacheReservePost']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
-        /**
-         * record operation
-         * @summary record operation
-         * @param {CommonsAppendOperationInput} body Record Operation details Request Body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async v1InstrumentationOperationPost(body: CommonsAppendOperationInput, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CommonsOperation>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.v1InstrumentationOperationPost(body, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['DefaultApi.v1InstrumentationOperationPost']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
     }
 };
 
@@ -630,15 +535,6 @@ export const DefaultApiFp = function(configuration?: Configuration) {
 export const DefaultApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = DefaultApiFp(configuration)
     return {
-        /**
-         * do ping
-         * @summary pings the api
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        pingGet(options?: RawAxiosRequestConfig): AxiosPromise<string> {
-            return localVarFp.pingGet(options).then((request) => request(axios, basePath));
-        },
         /**
          * commit cache
          * @summary commit cache
@@ -700,7 +596,7 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.v1CacheGetStatsPost(requestParameters.body, options).then((request) => request(axios, basePath));
         },
         /**
-         * list cache
+         * list cache entries with pagination, filtering, and sorting
          * @summary list cache
          * @param {DefaultApiV1CacheListPostRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -727,16 +623,6 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
          */
         v1CacheReservePost(requestParameters: DefaultApiV1CacheReservePostRequest, options?: RawAxiosRequestConfig): AxiosPromise<CommonsReserveCacheResponse> {
             return localVarFp.v1CacheReservePost(requestParameters.body, options).then((request) => request(axios, basePath));
-        },
-        /**
-         * record operation
-         * @summary record operation
-         * @param {DefaultApiV1InstrumentationOperationPostRequest} requestParameters Request parameters.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        v1InstrumentationOperationPost(requestParameters: DefaultApiV1InstrumentationOperationPostRequest, options?: RawAxiosRequestConfig): AxiosPromise<CommonsOperation> {
-            return localVarFp.v1InstrumentationOperationPost(requestParameters.body, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -861,37 +747,12 @@ export interface DefaultApiV1CacheReservePostRequest {
 }
 
 /**
- * Request parameters for v1InstrumentationOperationPost operation in DefaultApi.
- * @export
- * @interface DefaultApiV1InstrumentationOperationPostRequest
- */
-export interface DefaultApiV1InstrumentationOperationPostRequest {
-    /**
-     * Record Operation details Request Body
-     * @type {CommonsAppendOperationInput}
-     * @memberof DefaultApiV1InstrumentationOperationPost
-     */
-    readonly body: CommonsAppendOperationInput
-}
-
-/**
  * DefaultApi - object-oriented interface
  * @export
  * @class DefaultApi
  * @extends {BaseAPI}
  */
 export class DefaultApi extends BaseAPI {
-    /**
-     * do ping
-     * @summary pings the api
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApi
-     */
-    public pingGet(options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).pingGet(options).then((request) => request(this.axios, this.basePath));
-    }
-
     /**
      * commit cache
      * @summary commit cache
@@ -965,7 +826,7 @@ export class DefaultApi extends BaseAPI {
     }
 
     /**
-     * list cache
+     * list cache entries with pagination, filtering, and sorting
      * @summary list cache
      * @param {DefaultApiV1CacheListPostRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -997,18 +858,6 @@ export class DefaultApi extends BaseAPI {
      */
     public v1CacheReservePost(requestParameters: DefaultApiV1CacheReservePostRequest, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).v1CacheReservePost(requestParameters.body, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
-     * record operation
-     * @summary record operation
-     * @param {DefaultApiV1InstrumentationOperationPostRequest} requestParameters Request parameters.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof DefaultApi
-     */
-    public v1InstrumentationOperationPost(requestParameters: DefaultApiV1InstrumentationOperationPostRequest, options?: RawAxiosRequestConfig) {
-        return DefaultApiFp(this.configuration).v1InstrumentationOperationPost(requestParameters.body, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

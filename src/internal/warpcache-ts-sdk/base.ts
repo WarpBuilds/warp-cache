@@ -19,7 +19,7 @@ import type { Configuration } from './configuration.js';
 import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 
-export const BASE_PATH = "https://api.warpbuild.com/api/v1/backend-cache".replace(/\/+$/, "");
+export const BASE_PATH = "https://cache.warpbuild.com/api/v1".replace(/\/+$/, "");
 
 /**
  *

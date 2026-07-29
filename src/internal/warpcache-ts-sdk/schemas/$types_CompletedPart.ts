@@ -1,3 +1,4 @@
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -12,7 +13,6 @@ export const $types_CompletedPart = {
             checksum values of each individual part. For more information about how
             checksums are calculated with multipart uploads, see [Checking object integrity]in the Amazon S3 User
             Guide.
-
             [Checking object integrity]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums`,
         },
         ChecksumCRC32C: {
@@ -24,7 +24,6 @@ export const $types_CompletedPart = {
             checksum values of each individual part. For more information about how
             checksums are calculated with multipart uploads, see [Checking object integrity]in the Amazon S3 User
             Guide.
-
             [Checking object integrity]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums`,
         },
         ChecksumSHA1: {
@@ -36,7 +35,6 @@ export const $types_CompletedPart = {
             checksum values of each individual part. For more information about how
             checksums are calculated with multipart uploads, see [Checking object integrity]in the Amazon S3 User
             Guide.
-
             [Checking object integrity]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums`,
         },
         ChecksumSHA256: {
@@ -48,7 +46,6 @@ export const $types_CompletedPart = {
             checksum values of each individual part. For more information about how
             checksums are calculated with multipart uploads, see [Checking object integrity]in the Amazon S3 User
             Guide.
-
             [Checking object integrity]: https://docs.aws.amazon.com/AmazonS3/latest/userguide/checking-object-integrity.html#large-object-checksums`,
         },
         ETag: {
@@ -59,14 +56,12 @@ export const $types_CompletedPart = {
             type: 'number',
             description: `Part number that identifies the part. This is a positive integer between 1 and
             10,000.
-
             - General purpose buckets - In CompleteMultipartUpload , when a additional
             checksum (including x-amz-checksum-crc32 , x-amz-checksum-crc32c ,
             x-amz-checksum-sha1 , or x-amz-checksum-sha256 ) is applied to each part, the
             PartNumber must start at 1 and the part numbers must be consecutive.
             Otherwise, Amazon S3 generates an HTTP 400 Bad Request status code and an
             InvalidPartOrder error code.
-
             - Directory buckets - In CompleteMultipartUpload , the PartNumber must start
             at 1 and the part numbers must be consecutive.`,
         },

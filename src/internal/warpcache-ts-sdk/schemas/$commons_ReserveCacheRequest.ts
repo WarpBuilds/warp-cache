@@ -1,3 +1,4 @@
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -20,7 +21,6 @@ export const $commons_ReserveCacheRequest = {
         content_type: {
             type: 'string',
             description: `ContentType contains the content type of the cache.
-
              * This is not supported for GCS cache. When passed this will be ignored. *`,
         },
         number_of_chunks: {
@@ -28,7 +28,6 @@ export const $commons_ReserveCacheRequest = {
             description: `NumberOfChunks contains the number of chunks the cache will be split into.
             Minimum value: 1.
             Maximum value: 10000.
-
              * This is not supported for GCS cache. When passed this will be ignored. *`,
         },
         provider: {
