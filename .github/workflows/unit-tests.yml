@@ -15,7 +15,10 @@ jobs:
 
     strategy:
       matrix:
-        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+        runs-on:
+          - warp-ubuntu-latest-x64-4x
+          - warp-macos-14-arm64-6x
+          - warp-windows-2022-x64-4x
         node-version: [20.x, 24.x]
       fail-fast: false
 
