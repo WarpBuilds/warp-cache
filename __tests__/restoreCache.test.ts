@@ -4,8 +4,18 @@ import {restoreCache} from '../src/cache.js'
 import * as cacheHttpClient from '../src/internal/cacheHttpClient.js'
 import * as cacheUtils from '../src/internal/cacheUtils.js'
 import {CacheFilename, CompressionMethod} from '../src/internal/constants.js'
-import {ArtifactCacheEntry} from '../src/internal/contracts.js'
+import {CommonsGetCacheResponse} from '../src/internal/warpcache-ts-sdk/index.js'
 import * as tar from '../src/internal/tar.js'
+
+const archiveUrl = 'https://s3.test/download'
+
+function s3CacheEntry(userGivenKey: string): CommonsGetCacheResponse {
+  return {
+    provider: 's3',
+    cache_entry: {cache_user_given_key: userGivenKey},
+    s3: {pre_signed_url: archiveUrl}
+  }
+}
 
 jest.mock('../src/internal/cacheHttpClient')
 jest.mock('../src/internal/cacheUtils')
@@ -105,14 +115,9 @@ test('restore with gzip compressed cache found', async () => {
   const paths = ['node_modules']
   const key = 'node-test'
 
-  const cacheEntry: ArtifactCacheEntry = {
-    cacheKey: key,
-    scope: 'refs/heads/main',
-    archiveLocation: 'www.actionscache.test/download'
-  }
   const getCacheMock = jest.spyOn(cacheHttpClient, 'getCacheEntry')
   getCacheMock.mockImplementation(async () => {
-    return Promise.resolve(cacheEntry)
+    return Promise.resolve(s3CacheEntry(key))
   })
 
   const tempPath = '/foo/bar'
@@ -131,7 +136,6 @@ test('restore with gzip compressed cache found', async () => {
     .mockReturnValue(fileSize)
 
   const extractTarMock = jest.spyOn(tar, 'extractTar')
-  const unlinkFileMock = jest.spyOn(cacheUtils, 'unlinkFile')
 
   const compression = CompressionMethod.Gzip
   const getCompressionMock = jest
@@ -141,23 +145,17 @@ test('restore with gzip compressed cache found', async () => {
   const cacheKey = await restoreCache(paths, key)
 
   expect(cacheKey).toBe(key)
-  expect(getCacheMock).toHaveBeenCalledWith([key], paths, {
+  expect(getCacheMock).toHaveBeenCalledWith(key, [], paths, {
     compressionMethod: compression,
-    enableCrossOsArchive: false
+    enableCrossOsArchive: false,
+    enableCrossArchArchive: false
   })
   expect(createTempDirectoryMock).toHaveBeenCalledTimes(1)
-  expect(downloadCacheMock).toHaveBeenCalledWith(
-    cacheEntry.archiveLocation,
-    archivePath,
-    undefined
-  )
+  expect(downloadCacheMock).toHaveBeenCalledWith('s3', archiveUrl, archivePath)
   expect(getArchiveFileSizeInBytesMock).toHaveBeenCalledWith(archivePath)
 
   expect(extractTarMock).toHaveBeenCalledTimes(1)
   expect(extractTarMock).toHaveBeenCalledWith(archivePath, compression)
-
-  expect(unlinkFileMock).toHaveBeenCalledTimes(1)
-  expect(unlinkFileMock).toHaveBeenCalledWith(archivePath)
 
   expect(getCompressionMock).toHaveBeenCalledTimes(1)
 })
@@ -168,14 +166,9 @@ test('restore with zstd compressed cache found', async () => {
 
   const infoMock = jest.spyOn(core, 'info')
 
-  const cacheEntry: ArtifactCacheEntry = {
-    cacheKey: key,
-    scope: 'refs/heads/main',
-    archiveLocation: 'www.actionscache.test/download'
-  }
   const getCacheMock = jest.spyOn(cacheHttpClient, 'getCacheEntry')
   getCacheMock.mockImplementation(async () => {
-    return Promise.resolve(cacheEntry)
+    return Promise.resolve(s3CacheEntry(key))
   })
   const tempPath = '/foo/bar'
 
@@ -201,16 +194,13 @@ test('restore with zstd compressed cache found', async () => {
   const cacheKey = await restoreCache(paths, key)
 
   expect(cacheKey).toBe(key)
-  expect(getCacheMock).toHaveBeenCalledWith([key], paths, {
+  expect(getCacheMock).toHaveBeenCalledWith(key, [], paths, {
     compressionMethod: compression,
-    enableCrossOsArchive: false
+    enableCrossOsArchive: false,
+    enableCrossArchArchive: false
   })
   expect(createTempDirectoryMock).toHaveBeenCalledTimes(1)
-  expect(downloadCacheMock).toHaveBeenCalledWith(
-    cacheEntry.archiveLocation,
-    archivePath,
-    undefined
-  )
+  expect(downloadCacheMock).toHaveBeenCalledWith('s3', archiveUrl, archivePath)
   expect(getArchiveFileSizeInBytesMock).toHaveBeenCalledWith(archivePath)
   expect(infoMock).toHaveBeenCalledWith(`Cache Size: ~60 MB (62915000 B)`)
 
@@ -226,14 +216,9 @@ test('restore with cache found for restore key', async () => {
 
   const infoMock = jest.spyOn(core, 'info')
 
-  const cacheEntry: ArtifactCacheEntry = {
-    cacheKey: restoreKey,
-    scope: 'refs/heads/main',
-    archiveLocation: 'www.actionscache.test/download'
-  }
   const getCacheMock = jest.spyOn(cacheHttpClient, 'getCacheEntry')
   getCacheMock.mockImplementation(async () => {
-    return Promise.resolve(cacheEntry)
+    return Promise.resolve(s3CacheEntry(restoreKey))
   })
   const tempPath = '/foo/bar'
 
@@ -259,16 +244,13 @@ test('restore with cache found for restore key', async () => {
   const cacheKey = await restoreCache(paths, key, [restoreKey])
 
   expect(cacheKey).toBe(restoreKey)
-  expect(getCacheMock).toHaveBeenCalledWith([key, restoreKey], paths, {
+  expect(getCacheMock).toHaveBeenCalledWith(key, [restoreKey], paths, {
     compressionMethod: compression,
-    enableCrossOsArchive: false
+    enableCrossOsArchive: false,
+    enableCrossArchArchive: false
   })
   expect(createTempDirectoryMock).toHaveBeenCalledTimes(1)
-  expect(downloadCacheMock).toHaveBeenCalledWith(
-    cacheEntry.archiveLocation,
-    archivePath,
-    undefined
-  )
+  expect(downloadCacheMock).toHaveBeenCalledWith('s3', archiveUrl, archivePath)
   expect(getArchiveFileSizeInBytesMock).toHaveBeenCalledWith(archivePath)
   expect(infoMock).toHaveBeenCalledWith(`Cache Size: ~0 MB (142 B)`)
 
@@ -282,17 +264,11 @@ test('restore with dry run', async () => {
   const key = 'node-test'
   const options = {lookupOnly: true}
 
-  const cacheEntry: ArtifactCacheEntry = {
-    cacheKey: key,
-    scope: 'refs/heads/main',
-    archiveLocation: 'www.actionscache.test/download'
-  }
   const getCacheMock = jest.spyOn(cacheHttpClient, 'getCacheEntry')
   getCacheMock.mockImplementation(async () => {
-    return Promise.resolve(cacheEntry)
+    return Promise.resolve(s3CacheEntry(key))
   })
 
-  const createTempDirectoryMock = jest.spyOn(cacheUtils, 'createTempDirectory')
   const downloadCacheMock = jest.spyOn(cacheHttpClient, 'downloadCache')
 
   const compression = CompressionMethod.Gzip
@@ -304,11 +280,10 @@ test('restore with dry run', async () => {
 
   expect(cacheKey).toBe(key)
   expect(getCompressionMock).toHaveBeenCalledTimes(1)
-  expect(getCacheMock).toHaveBeenCalledWith([key], paths, {
+  expect(getCacheMock).toHaveBeenCalledWith(key, [], paths, {
     compressionMethod: compression,
-    enableCrossOsArchive: false
+    enableCrossOsArchive: false,
+    enableCrossArchArchive: false
   })
-  // creating a tempDir and downloading the cache are skipped
-  expect(createTempDirectoryMock).toHaveBeenCalledTimes(0)
   expect(downloadCacheMock).toHaveBeenCalledTimes(0)
 })
