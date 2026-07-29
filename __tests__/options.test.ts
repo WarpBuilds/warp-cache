@@ -13,6 +13,7 @@ const segmentTimeoutInMs = 600000
 const lookupOnly = false
 const uploadConcurrency = 4
 const uploadChunkSize = 32 * 1024 * 1024
+const enableCrossArchArchive = false
 
 test('getDownloadOptions sets defaults', async () => {
   const actualOptions = getDownloadOptions()
@@ -23,7 +24,8 @@ test('getDownloadOptions sets defaults', async () => {
     downloadConcurrency,
     timeoutInMs,
     segmentTimeoutInMs,
-    lookupOnly
+    lookupOnly,
+    enableCrossArchArchive
   })
 })
 
@@ -34,7 +36,8 @@ test('getDownloadOptions overrides all settings', async () => {
     downloadConcurrency: 14,
     timeoutInMs: 20000,
     segmentTimeoutInMs: 3600000,
-    lookupOnly: true
+    lookupOnly: true,
+    enableCrossArchArchive: true
   }
 
   const actualOptions = getDownloadOptions(expectedOptions)
@@ -47,14 +50,16 @@ test('getUploadOptions sets defaults', async () => {
 
   expect(actualOptions).toEqual({
     uploadConcurrency,
-    uploadChunkSize
+    uploadChunkSize,
+    enableCrossArchArchive
   })
 })
 
 test('getUploadOptions overrides all settings', async () => {
   const expectedOptions: UploadOptions = {
     uploadConcurrency: 2,
-    uploadChunkSize: 16 * 1024 * 1024
+    uploadChunkSize: 16 * 1024 * 1024,
+    enableCrossArchArchive: true
   }
 
   const actualOptions = getUploadOptions(expectedOptions)
