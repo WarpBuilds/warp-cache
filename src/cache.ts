@@ -1,16 +1,16 @@
 import * as core from '@actions/core'
 import * as path from 'path'
-import * as utils from './internal/cacheUtils'
-import * as cacheHttpClient from './internal/cacheHttpClient'
+import * as utils from './internal/cacheUtils.js'
+import * as cacheHttpClient from './internal/cacheHttpClient.js'
 import {
   createTar,
   extractStreamingTar,
   extractTar,
   listTar
-} from './internal/tar'
-import {DownloadOptions, getUploadOptions} from './options'
-import {isSuccessStatusCode} from './internal/requestUtils'
-import {getDownloadCommandPipeForWget} from './internal/downloadUtils'
+} from './internal/tar.js'
+import {DownloadOptions, getUploadOptions} from './options.js'
+import {isSuccessStatusCode} from './internal/requestUtils.js'
+import {getDownloadCommandPipeForWget} from './internal/downloadUtils.js'
 import {ChildProcessWithoutNullStreams} from 'child_process'
 
 export class ValidationError extends Error {

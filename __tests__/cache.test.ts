@@ -1,4 +1,4 @@
-import * as cache from '../src/cache'
+import * as cache from '../src/cache.js'
 
 test('isFeatureAvailable returns true if server url is set', () => {
   try {

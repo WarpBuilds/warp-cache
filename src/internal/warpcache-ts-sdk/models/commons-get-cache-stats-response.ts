@@ -15,7 +15,7 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsDailyOperationsBreakdown } from './commons-daily-operations-breakdown';
+import { CommonsDailyOperationsBreakdown } from './commons-daily-operations-breakdown.js';
 
 /**
  * 

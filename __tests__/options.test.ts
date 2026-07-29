@@ -3,7 +3,7 @@ import {
   UploadOptions,
   getDownloadOptions,
   getUploadOptions
-} from '../src/options'
+} from '../src/options.js'
 
 const useAzureSdk = false
 const concurrentBlobDownloads = true

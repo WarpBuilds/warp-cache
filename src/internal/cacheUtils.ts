@@ -11,7 +11,7 @@ import {
   CacheFilename,
   CompressionMethod,
   GnuTarPathOnWindows
-} from './constants'
+} from './constants.js'
 
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
 export async function createTempDirectory(): Promise<string> {

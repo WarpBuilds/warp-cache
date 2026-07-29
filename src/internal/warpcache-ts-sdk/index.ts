@@ -13,9 +13,9 @@
  */
 
 
-export * from "./api";
-export * from "./configuration";
-export * from "./models";
-import * as Schema from "./schema";
+export * from "./api.js";
+export * from "./configuration.js";
+export * from "./models/index.js";
+import * as Schema from "./schema.js";
 
 export {Schema};

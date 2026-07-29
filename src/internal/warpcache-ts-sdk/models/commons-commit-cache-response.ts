@@ -15,16 +15,16 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsAzureBlobCommitCacheResponse } from './commons-azure-blob-commit-cache-response';
+import { CommonsAzureBlobCommitCacheResponse } from './commons-azure-blob-commit-cache-response.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsCacheEntry } from './commons-cache-entry';
+import { CommonsCacheEntry } from './commons-cache-entry.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsGCSCommitCacheResponse } from './commons-gcscommit-cache-response';
+import { CommonsGCSCommitCacheResponse } from './commons-gcscommit-cache-response.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsS3CommitCacheResponse } from './commons-s3-commit-cache-response';
+import { CommonsS3CommitCacheResponse } from './commons-s3-commit-cache-response.js';
 
 /**
  * 

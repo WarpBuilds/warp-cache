@@ -15,7 +15,7 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsShortLivedToken } from './commons-short-lived-token';
+import { CommonsShortLivedToken } from './commons-short-lived-token.js';
 
 /**
  * 

@@ -13,50 +13,50 @@
  */
 
 
-import type { Configuration } from '../configuration';
+import type { Configuration } from '../configuration.js';
 import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../common';
+import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObject, setBearerAuthToObject, setOAuthToObject, setSearchParams, serializeDataIfNeeded, toPathString, createRequestFunction } from '../common.js';
 // @ts-ignore
-import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
+import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base.js';
 // @ts-ignore
-import { CommonsAppendOperationInput } from '../models';
+import { CommonsAppendOperationInput } from '../models/index.js';
 // @ts-ignore
-import { CommonsCacheEntry } from '../models';
+import { CommonsCacheEntry } from '../models/index.js';
 // @ts-ignore
-import { CommonsCommitCacheRequest } from '../models';
+import { CommonsCommitCacheRequest } from '../models/index.js';
 // @ts-ignore
-import { CommonsCommitCacheResponse } from '../models';
+import { CommonsCommitCacheResponse } from '../models/index.js';
 // @ts-ignore
-import { CommonsDaywiseCost } from '../models';
+import { CommonsDaywiseCost } from '../models/index.js';
 // @ts-ignore
-import { CommonsDeleteCacheRequest } from '../models';
+import { CommonsDeleteCacheRequest } from '../models/index.js';
 // @ts-ignore
-import { CommonsDeleteCacheResponse } from '../models';
+import { CommonsDeleteCacheResponse } from '../models/index.js';
 // @ts-ignore
-import { CommonsGetCacheRequest } from '../models';
+import { CommonsGetCacheRequest } from '../models/index.js';
 // @ts-ignore
-import { CommonsGetCacheResponse } from '../models';
+import { CommonsGetCacheResponse } from '../models/index.js';
 // @ts-ignore
-import { CommonsGetCacheStatsRequest } from '../models';
+import { CommonsGetCacheStatsRequest } from '../models/index.js';
 // @ts-ignore
-import { CommonsGetCacheStatsResponse } from '../models';
+import { CommonsGetCacheStatsResponse } from '../models/index.js';
 // @ts-ignore
-import { CommonsListCacheReposResponse } from '../models';
+import { CommonsListCacheReposResponse } from '../models/index.js';
 // @ts-ignore
-import { CommonsListCacheRequest } from '../models';
+import { CommonsListCacheRequest } from '../models/index.js';
 // @ts-ignore
-import { CommonsListCacheResponse } from '../models';
+import { CommonsListCacheResponse } from '../models/index.js';
 // @ts-ignore
-import { CommonsOperation } from '../models';
+import { CommonsOperation } from '../models/index.js';
 // @ts-ignore
-import { CommonsReserveCacheRequest } from '../models';
+import { CommonsReserveCacheRequest } from '../models/index.js';
 // @ts-ignore
-import { CommonsReserveCacheResponse } from '../models';
+import { CommonsReserveCacheResponse } from '../models/index.js';
 // @ts-ignore
-import { WarpBuildAPIError } from '../models';
+import { WarpBuildAPIError } from '../models/index.js';
 /**
  * DefaultApi - axios parameter creator
  * @export

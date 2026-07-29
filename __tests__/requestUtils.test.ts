@@ -1,6 +1,6 @@
-import {retry, retryTypedResponse} from '../src/internal/requestUtils'
+import {retry, retryTypedResponse} from '../src/internal/requestUtils.js'
 import {HttpClientError} from '@actions/http-client'
-import * as requestUtils from '../src/internal/requestUtils'
+import * as requestUtils from '../src/internal/requestUtils.js'
 
 interface ITestResponse {
   statusCode: number

@@ -1,11 +1,11 @@
 import * as core from '@actions/core'
 import * as path from 'path'
-import {restoreCache} from '../src/cache'
-import * as cacheHttpClient from '../src/internal/cacheHttpClient'
-import * as cacheUtils from '../src/internal/cacheUtils'
-import {CacheFilename, CompressionMethod} from '../src/internal/constants'
-import {ArtifactCacheEntry} from '../src/internal/contracts'
-import * as tar from '../src/internal/tar'
+import {restoreCache} from '../src/cache.js'
+import * as cacheHttpClient from '../src/internal/cacheHttpClient.js'
+import * as cacheUtils from '../src/internal/cacheUtils.js'
+import {CacheFilename, CompressionMethod} from '../src/internal/constants.js'
+import {ArtifactCacheEntry} from '../src/internal/contracts.js'
+import * as tar from '../src/internal/tar.js'
 
 jest.mock('../src/internal/cacheHttpClient')
 jest.mock('../src/internal/cacheUtils')

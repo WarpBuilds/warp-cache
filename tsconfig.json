@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "module": "commonjs",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "strict": true,
     "declaration": true,
-    "target": "es6",
+    "target": "es2022",
     "skipLibCheck": true,
     "sourceMap": true,
     "noImplicitAny": false,
     "useUnknownInCatchVariables": false,
-    "baseUrl": "./",
     "outDir": "./lib",
     "rootDir": "./src",
     "lib": [
-      "es6",
+      "es2022",
       "dom"
     ]
   },

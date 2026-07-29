@@ -4,7 +4,7 @@ import {
   PushEvent,
   PullRequestEvent,
   WorkflowDispatchEvent
-} from '@octokit/webhooks-definitions/schema'
+} from '@octokit/webhooks-types'
 import {HttpClient} from '@actions/http-client'
 import {BearerCredentialHandler} from '@actions/http-client/lib/auth'
 import {
@@ -13,22 +13,22 @@ import {
 } from '@actions/http-client/lib/interfaces'
 import * as crypto from 'crypto'
 
-import * as utils from './cacheUtils'
-import {CompressionMethod} from './constants'
+import * as utils from './cacheUtils.js'
+import {CompressionMethod} from './constants.js'
 import os from 'os'
 import {
   InternalCacheOptions,
   ITypedResponseWithError,
   InternalS3CompletedPart
-} from './contracts'
+} from './contracts.js'
 import {
   downloadCacheGCP,
   downloadCacheHttpClientConcurrent,
   downloadCacheMultiConnection,
   downloadCacheMultipartGCP,
   downloadCacheStreamingGCP
-} from './downloadUtils'
-import {isSuccessStatusCode, retryTypedResponse} from './requestUtils'
+} from './downloadUtils.js'
+import {isSuccessStatusCode, retryTypedResponse} from './requestUtils.js'
 import {Storage} from '@google-cloud/storage'
 import {
   CommonsCommitCacheRequest,
@@ -37,10 +37,10 @@ import {
   CommonsGetCacheResponse,
   CommonsReserveCacheRequest,
   CommonsReserveCacheResponse
-} from './warpcache-ts-sdk'
-import {multiPartUploadToGCS, uploadFileToS3} from './uploadUtils'
-import {CommonsGetCacheRequest} from './warpcache-ts-sdk/models/commons-get-cache-request'
-import {CommonsDeleteCacheRequest} from './warpcache-ts-sdk/models/commons-delete-cache-request'
+} from './warpcache-ts-sdk/index.js'
+import {multiPartUploadToGCS, uploadFileToS3} from './uploadUtils.js'
+import {CommonsGetCacheRequest} from './warpcache-ts-sdk/models/commons-get-cache-request.js'
+import {CommonsDeleteCacheRequest} from './warpcache-ts-sdk/models/commons-delete-cache-request.js'
 import {OAuth2Client} from 'google-auth-library'
 import {BlockBlobClient} from '@azure/storage-blob'
 
@@ -178,11 +178,9 @@ export async function getCacheEntry(
         )
 
         // If head points to a different repository, add it to restoreRepos. We allow restores from head repos as well.
-        if (
-          pullPayload?.pull_request?.head?.repo?.name !==
-          pullPayload?.repository?.name
-        ) {
-          restoreRepos.add(pullPayload?.pull_request?.head?.repo?.name)
+        const headRepoName = pullPayload?.pull_request?.head?.repo?.name
+        if (headRepoName && headRepoName !== pullPayload?.repository?.name) {
+          restoreRepos.add(headRepoName)
         }
       }
       break

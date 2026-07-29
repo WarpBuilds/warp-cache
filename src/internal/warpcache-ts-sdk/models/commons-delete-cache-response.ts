@@ -15,16 +15,16 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsAzureBlobDeleteCacheResponse } from './commons-azure-blob-delete-cache-response';
+import { CommonsAzureBlobDeleteCacheResponse } from './commons-azure-blob-delete-cache-response.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsCacheEntry } from './commons-cache-entry';
+import { CommonsCacheEntry } from './commons-cache-entry.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsGCSDeleteCacheResponse } from './commons-gcsdelete-cache-response';
+import { CommonsGCSDeleteCacheResponse } from './commons-gcsdelete-cache-response.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsS3DeleteCacheResponse } from './commons-s3-delete-cache-response';
+import { CommonsS3DeleteCacheResponse } from './commons-s3-delete-cache-response.js';
 
 /**
  * 

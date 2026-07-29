@@ -1,6 +1,6 @@
-import {deleteCache, restoreCache, saveCache} from './cache'
-import {getCacheVersion} from './internal/cacheHttpClient'
-import {getCompressionMethod} from './internal/cacheUtils'
+import {deleteCache, restoreCache, saveCache} from './cache.js'
+import {getCacheVersion} from './internal/cacheHttpClient.js'
+import {getCompressionMethod} from './internal/cacheUtils.js'
 
 // process.env['WARPBUILD_CACHE_URL'] = 'https://cache.dev.warpbuild.dev'
 process.env['WARPBUILD_CACHE_URL'] = 'http://localhost:8000'

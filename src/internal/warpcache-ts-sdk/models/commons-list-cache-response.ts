@@ -15,7 +15,7 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsCacheEntryWithStat } from './commons-cache-entry-with-stat';
+import { CommonsCacheEntryWithStat } from './commons-cache-entry-with-stat.js';
 
 /**
  * 

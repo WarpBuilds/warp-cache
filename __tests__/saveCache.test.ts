@@ -1,15 +1,15 @@
 import * as core from '@actions/core'
 import * as path from 'path'
-import {saveCache} from '../src/cache'
-import * as cacheHttpClient from '../src/internal/cacheHttpClient'
-import * as cacheUtils from '../src/internal/cacheUtils'
-import {CacheFilename, CompressionMethod} from '../src/internal/constants'
-import * as tar from '../src/internal/tar'
+import {saveCache} from '../src/cache.js'
+import * as cacheHttpClient from '../src/internal/cacheHttpClient.js'
+import * as cacheUtils from '../src/internal/cacheUtils.js'
+import {CacheFilename, CompressionMethod} from '../src/internal/constants.js'
+import * as tar from '../src/internal/tar.js'
 import {TypedResponse} from '@actions/http-client/lib/interfaces'
 import {
   ReserveCacheResponse,
   ITypedResponseWithError
-} from '../src/internal/contracts'
+} from '../src/internal/contracts.js'
 import {HttpClientError} from '@actions/http-client'
 
 jest.mock('../src/internal/cacheHttpClient')
