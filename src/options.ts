@@ -16,6 +16,13 @@ export interface UploadOptions {
    * @default 32MB
    */
   uploadChunkSize?: number
+  /**
+   * Save a cache that can be restored on any CPU architecture.
+   * Excludes the architecture from the cache version.
+   *
+   * @default false
+   */
+  enableCrossArchArchive?: boolean
 }
 
 /**
@@ -68,6 +75,14 @@ export interface DownloadOptions {
    * @default false
    */
   lookupOnly?: boolean
+
+  /**
+   * Restore a cache saved on any CPU architecture.
+   * Excludes the architecture from the cache version.
+   *
+   * @default false
+   */
+  enableCrossArchArchive?: boolean
 }
 
 /**
@@ -78,7 +93,8 @@ export interface DownloadOptions {
 export function getUploadOptions(copy?: UploadOptions): UploadOptions {
   const result: UploadOptions = {
     uploadConcurrency: 4,
-    uploadChunkSize: 32 * 1024 * 1024
+    uploadChunkSize: 32 * 1024 * 1024,
+    enableCrossArchArchive: false
   }
 
   if (copy) {
@@ -89,10 +105,15 @@ export function getUploadOptions(copy?: UploadOptions): UploadOptions {
     if (typeof copy.uploadChunkSize === 'number') {
       result.uploadChunkSize = copy.uploadChunkSize
     }
+
+    if (typeof copy.enableCrossArchArchive === 'boolean') {
+      result.enableCrossArchArchive = copy.enableCrossArchArchive
+    }
   }
 
   core.debug(`Upload concurrency: ${result.uploadConcurrency}`)
   core.debug(`Upload chunk size: ${result.uploadChunkSize}`)
+  core.debug(`Cross arch archive: ${result.enableCrossArchArchive}`)
 
   return result
 }
@@ -109,7 +130,8 @@ export function getDownloadOptions(copy?: DownloadOptions): DownloadOptions {
     downloadConcurrency: 8,
     timeoutInMs: 30000,
     segmentTimeoutInMs: 600000,
-    lookupOnly: false
+    lookupOnly: false,
+    enableCrossArchArchive: false
   }
 
   if (copy) {
@@ -136,6 +158,10 @@ export function getDownloadOptions(copy?: DownloadOptions): DownloadOptions {
     if (typeof copy.lookupOnly === 'boolean') {
       result.lookupOnly = copy.lookupOnly
     }
+
+    if (typeof copy.enableCrossArchArchive === 'boolean') {
+      result.enableCrossArchArchive = copy.enableCrossArchArchive
+    }
   }
   const segmentDownloadTimeoutMins =
     process.env['SEGMENT_DOWNLOAD_TIMEOUT_MINS']
@@ -155,6 +181,7 @@ export function getDownloadOptions(copy?: DownloadOptions): DownloadOptions {
   )
   core.debug(`Segment download timeout (ms): ${result.segmentTimeoutInMs}`)
   core.debug(`Lookup only: ${result.lookupOnly}`)
+  core.debug(`Cross arch archive: ${result.enableCrossArchArchive}`)
 
   return result
 }
