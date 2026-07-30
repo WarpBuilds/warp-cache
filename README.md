@@ -1,21 +1,18 @@
-# `@actions/cache`
+# `@warpbuilds/cache`
 
-> Functions necessary for caching dependencies and build outputs to improve workflow execution time.
+> Cache client library for [WarpBuild](https://warpbuild.com)'s cache service.
 
-See ["Caching dependencies to speed up workflows"](https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows) for how caching works.
-
-Note that GitHub will remove any cache entries that have not been accessed in over 7 days. There is no limit on the number of caches you can store, but the total size of all caches in a repository is limited to 10 GB. If you exceed this limit, GitHub will save your cache but will begin evicting caches until the total size is less than 10 GB.
 
 ## Usage
 
-This package is used by the v2+ versions of our first party cache action. You can find an example implementation in the cache repo [here](https://github.com/actions/cache).
+This package is used by [`WarpBuilds/cache`](https://github.com/WarpBuilds/cache) and the WarpBuild `setup-*` actions. To add caching to a workflow, use one of those actions rather than this package directly.
 
 #### Save Cache
 
-Saves a cache containing the files in `paths` using the `key` provided. The files would be compressed using zstandard compression algorithm if zstd is installed, otherwise gzip is used. Function returns the cache id if the cache was saved succesfully and throws an error if cache upload fails.
+Saves a cache containing the files in `paths` using the `key` provided. The files would be compressed using zstandard compression algorithm if zstd is installed, otherwise gzip is used. Returns a positive id if the cache was saved, or `-1` if it was not. Losing a race to another job saving the same key returns `-1` rather than throwing.
 
 ```js
-const cache = require('@actions/cache');
+import * as cache from '@warpbuilds/cache';
 const paths = [
     'node_modules',
     'packages/*/node_modules/'
@@ -29,7 +26,7 @@ const cacheId = await cache.saveCache(paths, key)
 Restores a cache based on `key` and `restoreKeys` to the `paths` provided. Function returns the cache key for cache hit and returns undefined if cache not found.
 
 ```js
-const cache = require('@actions/cache');
+import * as cache from '@warpbuilds/cache';
 const paths = [
     'node_modules',
     'packages/*/node_modules/'
@@ -44,8 +41,8 @@ const cacheKey = await cache.restoreCache(paths, key, restoreKeys)
 
 ##### Cache segment restore timeout
 
-A cache gets downloaded in multiple segments of fixed sizes (now `128MB` to fail-fast, previously `1GB` for a `32-bit` runner and `2GB` for a `64-bit` runner were used). Sometimes, a segment download gets stuck which causes the workflow job to be stuck forever and fail. Version `v3.0.4` of cache package introduces a segment download timeout. The segment download timeout will allow the segment download to get aborted and hence allow the job to proceed with a cache miss.
+A cache gets downloaded in multiple segments of fixed sizes. Sometimes, a segment download gets stuck which causes the workflow job to be stuck forever and fail. The segment download timeout allows the segment download to get aborted and hence allows the job to proceed with a cache miss.
 
-Default value of this timeout is 10 minutes (starting `v3.2.1` and higher, previously 60 minutes in versions between `v.3.0.4` and `v3.2.0`, both included) and can be customized by specifying an [environment variable](https://docs.github.com/en/actions/learn-github-actions/environment-variables) named `SEGMENT_DOWNLOAD_TIMEOUT_MINS` with timeout value in minutes.
+Default value of this timeout is 10 minutes and can be customized by specifying an environment variable named `SEGMENT_DOWNLOAD_TIMEOUT_MINS` with timeout value in minutes.
 
 
