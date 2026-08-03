@@ -19,7 +19,7 @@ jobs:
         runs-on:
           - warp-ubuntu-latest-x64-4x
           - warp-ubuntu-latest-arm64-16x
-          - warp-macos-14-arm64-6x
+          - warp-macos-15-arm64-6x
       fail-fast: false
     runs-on: ${{ matrix.runs-on }}
     steps:
@@ -65,7 +65,7 @@ jobs:
         runs-on:
           - warp-ubuntu-latest-x64-4x
           - warp-ubuntu-latest-arm64-16x
-          - warp-macos-14-arm64-6x
+          - warp-macos-15-arm64-6x
       fail-fast: false
     runs-on: ${{ matrix.runs-on }}
     steps:
