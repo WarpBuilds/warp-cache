@@ -181,7 +181,7 @@ test('save with large cache outputs should fail in GHES without error message', 
 test('save with reserve cache failure should fail', async () => {
   const paths = ['node_modules']
   const primaryKey = 'Linux-node-bb828da54c148048dd17899ba9fda624811cfb43'
-  const logWarningMock = jest.spyOn(core, 'warning')
+  const logInfoMock = jest.spyOn(core, 'info')
   const reserveError = 'Unable to reserve cache'
 
   const reserveCacheMock = jest
@@ -205,8 +205,8 @@ test('save with reserve cache failure should fail', async () => {
 
   const cacheId = await saveCache(paths, primaryKey)
   expect(cacheId).toBe(-1)
-  expect(logWarningMock).toHaveBeenCalledTimes(1)
-  expect(logWarningMock).toHaveBeenCalledWith(`Failed to save: ${reserveError}`)
+  expect(logInfoMock).toHaveBeenCalledTimes(1)
+  expect(logInfoMock).toHaveBeenCalledWith(`Failed to save: ${reserveError}`)
 
   expect(reserveCacheMock).toHaveBeenCalledTimes(1)
   expect(reserveCacheMock).toHaveBeenCalledWith(

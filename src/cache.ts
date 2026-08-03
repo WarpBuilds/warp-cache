@@ -15,6 +15,7 @@ import {
   getUploadOptions
 } from './options.js'
 import {isSuccessStatusCode} from './internal/requestUtils.js'
+import {HttpClientError} from '@actions/http-client'
 import {getDownloadCommandPipeForWget} from './internal/downloadUtils.js'
 import {ChildProcessWithoutNullStreams} from 'child_process'
 
@@ -130,6 +131,12 @@ export async function restoreCache(
     core.debug(`Archive Path: ${archivePath}`)
 
     const cacheKey = cacheEntry?.cache_entry?.cache_user_given_key ?? primaryKey
+
+    if (cacheKey !== primaryKey) {
+      core.info(`Cache hit for restore-key: ${cacheKey}`)
+    } else {
+      core.info(`Cache hit for: ${cacheKey}`)
+    }
 
     switch (cacheEntry.provider) {
       case 's3':
@@ -311,7 +318,16 @@ export async function restoreCache(
       throw error
     } else {
       // Suppress all non-validation cache related errors because caching should be optional
-      core.warning(`Failed to restore: ${(error as Error).message}`)
+      // Log server errors (5xx) as errors, all other errors as warnings.
+      if (
+        typedError instanceof HttpClientError &&
+        typeof typedError.statusCode === 'number' &&
+        typedError.statusCode >= 500
+      ) {
+        core.error(`Failed to restore: ${(error as Error).message}`)
+      } else {
+        core.warning(`Failed to restore: ${(error as Error).message}`)
+      }
     }
   } finally {
     // Try to delete the archive to save space
@@ -418,12 +434,18 @@ export async function saveCache(
           cacheVersion
         })}`
       )
-      throw new Error(
-        reserveCacheResponse?.error?.message ??
-          `Cache size of ~${Math.round(
-            archiveFileSize / (1024 * 1024)
-          )} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`
-      )
+      if (
+        reserveCacheResponse?.statusCode === 400 ||
+        !reserveCacheResponse?.error?.message
+      ) {
+        throw new Error(
+          reserveCacheResponse?.error?.message ??
+            `Cache size of ~${Math.round(
+              archiveFileSize / (1024 * 1024)
+            )} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`
+        )
+      }
+      throw new ReserveCacheError(reserveCacheResponse.error.message)
     }
 
     switch (reserveCacheResponse.result?.provider) {

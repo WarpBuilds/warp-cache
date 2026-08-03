@@ -5,7 +5,7 @@ import {
   PullRequestEvent,
   WorkflowDispatchEvent
 } from '@octokit/webhooks-types'
-import {HttpClient} from '@actions/http-client'
+import {HttpClient, HttpClientError} from '@actions/http-client'
 import {BearerCredentialHandler} from '@actions/http-client/lib/auth'
 import {
   RequestOptions,
@@ -212,15 +212,15 @@ export async function getCacheEntry(
     )
   )
 
-  if (response.statusCode === 204) {
-    // TODO: List cache for primary key only if cache miss occurs
-    // if (core.isDebug()) {
-    //   await printCachesListForDiagnostics(keys[0], httpClient, version)
-    // }
+  if (response.statusCode === 204 || response.statusCode === 404) {
+    core.debug(`No cache entry for key '${key}' with version '${version}'`)
     return null
   }
   if (!isSuccessStatusCode(response.statusCode)) {
-    throw new Error(`Cache service responded with ${response.statusCode}`)
+    throw new HttpClientError(
+      `Cache service responded with ${response.statusCode}`,
+      response.statusCode
+    )
   }
 
   const cacheResult = response.result
