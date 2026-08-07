@@ -1,6 +1,6 @@
 {
   "name": "@warpbuilds/cache",
-  "version": "2.0.0-1",
+  "version": "2.0.0",
   "description": "Cache client library for WarpBuild's cache service",
   "keywords": [
     "github",
