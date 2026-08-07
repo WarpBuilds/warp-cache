@@ -1,0 +1,329 @@
+name: e2e-tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      cache-url:
+        description: 'Cache service to test against'
+        required: false
+        default: 'https://cache.warpbuild.com'
+
+env:
+  WARPBUILD_CACHE_URL: ${{ github.event.inputs.cache-url || 'https://cache.warpbuild.com' }}
+
+jobs:
+  e2e-save:
+    name: e2e save (${{ matrix.runs-on }})
+    strategy:
+      matrix:
+        runs-on:
+          - warp-ubuntu-latest-x64-4x
+          - warp-ubuntu-latest-arm64-16x
+          - warp-macos-15-arm64-6x
+      fail-fast: false
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+
+      # Without this, a runner missing the token makes every cache call a
+      # no-op and the whole matrix reports success having tested nothing.
+      - name: Confirm the cache service is reachable
+        run: |
+          node --input-type=module -e "
+            const cache = await import('./lib/cache.js')
+            if (!cache.isFeatureAvailable()) {
+              console.error('WARPBUILD_RUNNER_VERIFICATION_TOKEN is not set — this is not a warp runner.')
+              process.exit(1)
+            }
+            console.log('cache service available at', process.env.WARPBUILD_CACHE_URL)
+          "
+
+      - name: Generate files inside and outside the workspace
+        shell: bash
+        run: |
+          __tests__/create-cache-files.sh ${{ runner.os }}-${{ runner.arch }} test-cache
+          __tests__/create-cache-files.sh ${{ runner.os }}-${{ runner.arch }} ~/test-cache
+
+      - name: saveCache
+        run: |
+          node --input-type=module -e "
+            const {saveCache} = await import('./lib/cache.js')
+            const id = await saveCache(['test-cache','~/test-cache'], 'e2e-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}')
+            if (id === -1) { console.error('save reported -1'); process.exit(1) }
+            console.log('saved:', id)
+          "
+
+  e2e-restore:
+    name: e2e restore (${{ matrix.runs-on }})
+    needs: e2e-save
+    strategy:
+      matrix:
+        runs-on:
+          - warp-ubuntu-latest-x64-4x
+          - warp-ubuntu-latest-arm64-16x
+          - warp-macos-15-arm64-6x
+      fail-fast: false
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+
+      - name: restoreCache — exact key
+        run: |
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache','~/test-cache'], 'e2e-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}')
+            if (!k) { console.error('MISS on a key we just wrote'); process.exit(1) }
+            console.log('restored:', k)
+          "
+
+      - name: Verify restored content
+        shell: bash
+        run: |
+          __tests__/verify-cache-files.sh ${{ runner.os }}-${{ runner.arch }} test-cache
+          __tests__/verify-cache-files.sh ${{ runner.os }}-${{ runner.arch }} ~/test-cache
+
+      # The path set feeds the cache version, so the fallback must ask for the
+      # same paths the save used or it can never match.
+      - name: restoreCache — restore-key prefix fallback
+        shell: bash
+        run: |
+          rm -rf test-cache ~/test-cache
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache','~/test-cache'], 'e2e-absent-${{ github.run_id }}', ['e2e-${{ runner.os }}-${{ runner.arch }}-'])
+            if (!k) { console.error('restore-key fallback did not match'); process.exit(1) }
+            console.log('fell back to:', k)
+          "
+
+      - name: restoreCache — a genuine miss returns undefined, not a throw
+        run: |
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache','~/test-cache'], 'e2e-definitely-absent-${{ github.run_id }}')
+            if (k) { console.error('expected a miss, got', k); process.exit(1) }
+            console.log('miss handled cleanly')
+          "
+
+      - name: restoreCache — lookupOnly writes nothing to disk
+        shell: bash
+        run: |
+          rm -rf test-cache
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache','~/test-cache'], 'e2e-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}', [], {lookupOnly: true})
+            if (!k) { console.error('lookupOnly should still report the hit'); process.exit(1) }
+            console.log('lookupOnly hit:', k)
+          "
+          if [ -e test-cache/test-file.txt ]; then
+            echo 'lookupOnly wrote files to disk'
+            exit 1
+          fi
+
+  # runner.os is "Linux" on x64 and arm64 alike, so the key must carry the arch
+  # or the two save jobs collide and each restore reads its own entry.
+  e2e-cross-arch-save-x64:
+    name: e2e cross-arch save (x64)
+    runs-on: warp-ubuntu-latest-x64-4x
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - shell: bash
+        run: __tests__/create-cache-files.sh xarch test-cache
+      - name: saveCache with enableCrossArchArchive
+        run: |
+          node --input-type=module -e "
+            const {saveCache} = await import('./lib/cache.js')
+            const id = await saveCache(['test-cache'], 'xarch-from-x64-${{ github.run_id }}', {enableCrossArchArchive: true})
+            if (id === -1) { console.error('save reported -1'); process.exit(1) }
+            console.log('saved:', id)
+          "
+
+  e2e-cross-arch-restore-arm64:
+    name: e2e cross-arch restore (arm64 reads x64's cache)
+    needs: e2e-cross-arch-save-x64
+    runs-on: warp-ubuntu-latest-arm64-16x
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - name: restoreCache with enableCrossArchArchive
+        run: |
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache'], 'xarch-from-x64-${{ github.run_id }}', [], {enableCrossArchArchive: true})
+            if (!k) { console.error('cross-arch restore missed a key x64 just wrote'); process.exit(1) }
+            console.log('restored:', k)
+          "
+      - shell: bash
+        run: __tests__/verify-cache-files.sh xarch test-cache
+
+  e2e-cross-arch-save-arm64:
+    name: e2e cross-arch save (arm64)
+    runs-on: warp-ubuntu-latest-arm64-16x
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - shell: bash
+        run: __tests__/create-cache-files.sh xarch test-cache
+      - name: saveCache with enableCrossArchArchive
+        run: |
+          node --input-type=module -e "
+            const {saveCache} = await import('./lib/cache.js')
+            const id = await saveCache(['test-cache'], 'xarch-from-arm64-${{ github.run_id }}', {enableCrossArchArchive: true})
+            if (id === -1) { console.error('save reported -1'); process.exit(1) }
+            console.log('saved:', id)
+          "
+
+  e2e-cross-arch-restore-x64:
+    name: e2e cross-arch restore (x64 reads arm64's cache)
+    needs: e2e-cross-arch-save-arm64
+    runs-on: warp-ubuntu-latest-x64-4x
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - name: restoreCache with enableCrossArchArchive
+        run: |
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache'], 'xarch-from-arm64-${{ github.run_id }}', [], {enableCrossArchArchive: true})
+            if (!k) { console.error('cross-arch restore missed a key arm64 just wrote'); process.exit(1) }
+            console.log('restored:', k)
+          "
+      - shell: bash
+        run: __tests__/verify-cache-files.sh xarch test-cache
+
+  # Mirrors test-proxy-* in WarpBuilds/cache. The container needs the runner
+  # token passed in explicitly or every call 401s.
+  e2e-proxy:
+    name: e2e save + restore behind a proxy
+    runs-on: warp-ubuntu-latest-x64-4x
+    container:
+      image: ubuntu:latest
+      options: --dns 127.0.0.1
+      env:
+        WARPBUILD_RUNNER_VERIFICATION_TOKEN: ${{ env.WARPBUILD_RUNNER_VERIFICATION_TOKEN }}
+    services:
+      squid-proxy:
+        image: ubuntu/squid:latest
+        ports:
+          - 3128:3128
+    env:
+      https_proxy: http://squid-proxy:3128
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - shell: bash
+        run: __tests__/create-cache-files.sh proxy test-cache
+      - name: saveCache through the proxy
+        run: |
+          node --input-type=module -e "
+            const {saveCache} = await import('./lib/cache.js')
+            const id = await saveCache(['test-cache'], 'proxy-${{ github.run_id }}')
+            if (id === -1) { console.error('save reported -1'); process.exit(1) }
+            console.log('saved:', id)
+          "
+      - name: restoreCache through the proxy
+        shell: bash
+        run: |
+          rm -rf test-cache
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache'], 'proxy-${{ github.run_id }}')
+            if (!k) { console.error('proxy restore missed'); process.exit(1) }
+            console.log('restored:', k)
+          "
+          __tests__/verify-cache-files.sh proxy test-cache
+
+  # The service scopes entries by ref and falls back to the default branch.
+  # Warp-specific, and the reason for the restore-across-branches work.
+  e2e-save-default-branch:
+    name: e2e seed default-branch cache
+    if: github.ref == 'refs/heads/main'
+    runs-on: warp-ubuntu-latest-x64-4x
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - shell: bash
+        run: __tests__/create-cache-files.sh defaultbranch test-cache
+      - name: saveCache under a stable key
+        run: |
+          node --input-type=module -e "
+            const {saveCache} = await import('./lib/cache.js')
+            const id = await saveCache(['test-cache'], 'warp-cache-default-branch-probe')
+            console.log('saved:', id)
+          "
+
+  e2e-restore-from-default-branch:
+    name: e2e restore default-branch cache from a PR branch
+    if: github.ref != 'refs/heads/main'
+    runs-on: warp-ubuntu-latest-x64-4x
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - name: restoreCache seeded on the default branch
+        run: |
+          node --input-type=module -e "
+            const {restoreCache} = await import('./lib/cache.js')
+            const k = await restoreCache(['test-cache'], 'warp-cache-default-branch-probe')
+            console.log(k ? 'restored: ' + k : 'miss — the seed job may not have run on main yet')
+          "
+
+  e2e-cleanup:
+    name: e2e cleanup
+    needs:
+      - e2e-restore
+      - e2e-cross-arch-restore-arm64
+      - e2e-cross-arch-restore-x64
+      - e2e-proxy
+    if: always()
+    runs-on: warp-ubuntu-latest-x64-4x
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 20.x
+      - run: npm ci && npm run build
+      - name: deleteCache
+        continue-on-error: true
+        run: |
+          node --input-type=module -e "
+            const {deleteCache} = await import('./lib/cache.js')
+            const keys = [
+              'e2e-Linux-X64-${{ github.run_id }}',
+              'e2e-Linux-ARM64-${{ github.run_id }}',
+              'e2e-macOS-ARM64-${{ github.run_id }}',
+              'xarch-from-x64-${{ github.run_id }}',
+              'xarch-from-arm64-${{ github.run_id }}',
+              'proxy-${{ github.run_id }}'
+            ]
+            const rs = await Promise.allSettled(keys.map(k => deleteCache(['test-cache'], k)))
+            rs.forEach((r, i) => console.log(keys[i], r.status))
+          "

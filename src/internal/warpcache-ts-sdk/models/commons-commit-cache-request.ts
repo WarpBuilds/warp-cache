@@ -15,7 +15,7 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { TypesCompletedPart } from './types-completed-part';
+import { TypesCompletedPart } from './types-completed-part.js';
 
 /**
  * 

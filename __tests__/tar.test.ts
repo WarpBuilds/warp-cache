@@ -8,9 +8,9 @@ import {
   ManifestFilename,
   SystemTarPathOnWindows,
   TarFilename
-} from '../src/internal/constants'
-import * as tar from '../src/internal/tar'
-import * as utils from '../src/internal/cacheUtils'
+} from '../src/internal/constants.js'
+import * as tar from '../src/internal/tar.js'
+import * as utils from '../src/internal/cacheUtils.js'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import fs from 'fs'
 

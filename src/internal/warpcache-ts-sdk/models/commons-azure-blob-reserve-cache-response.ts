@@ -25,6 +25,18 @@ export interface CommonsAzureBlobReserveCacheResponse {
      * @type {string}
      * @memberof CommonsAzureBlobReserveCacheResponse
      */
+    'blob_name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonsAzureBlobReserveCacheResponse
+     */
+    'container_name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonsAzureBlobReserveCacheResponse
+     */
     'pre_signed_url'?: string;
 }
 

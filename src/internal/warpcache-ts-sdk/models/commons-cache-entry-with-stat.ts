@@ -15,7 +15,7 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsCacheEntryMetadata } from './commons-cache-entry-metadata';
+import { CommonsCacheEntryMetadata } from './commons-cache-entry-metadata.js';
 
 /**
  * 

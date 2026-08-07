@@ -1,15 +1,13 @@
 import * as core from '@actions/core'
 import * as path from 'path'
-import {saveCache} from '../src/cache'
-import * as cacheHttpClient from '../src/internal/cacheHttpClient'
-import * as cacheUtils from '../src/internal/cacheUtils'
-import {CacheFilename, CompressionMethod} from '../src/internal/constants'
-import * as tar from '../src/internal/tar'
+import {saveCache} from '../src/cache.js'
+import * as cacheHttpClient from '../src/internal/cacheHttpClient.js'
+import * as cacheUtils from '../src/internal/cacheUtils.js'
+import {CacheFilename, CompressionMethod} from '../src/internal/constants.js'
+import * as tar from '../src/internal/tar.js'
 import {TypedResponse} from '@actions/http-client/lib/interfaces'
-import {
-  ReserveCacheResponse,
-  ITypedResponseWithError
-} from '../src/internal/contracts'
+import {ITypedResponseWithError} from '../src/internal/contracts.js'
+import {CommonsReserveCacheResponse} from '../src/internal/warpcache-ts-sdk/index.js'
 import {HttpClientError} from '@actions/http-client'
 
 jest.mock('../src/internal/cacheHttpClient')
@@ -32,6 +30,9 @@ beforeAll(() => {
   jest.spyOn(cacheUtils, 'createTempDirectory').mockImplementation(async () => {
     return Promise.resolve('/foo/bar')
   })
+  jest
+    .spyOn(cacheHttpClient, 'getCacheVersion')
+    .mockReturnValue('cache-version')
 })
 
 test('save with missing input should fail', async () => {
@@ -50,7 +51,7 @@ test('save with large cache outputs should fail', async () => {
   const createTarMock = jest.spyOn(tar, 'createTar')
   const logWarningMock = jest.spyOn(core, 'warning')
 
-  const cacheSize = 11 * 1024 * 1024 * 1024 //~11GB, over the 10GB limit
+  const cacheSize = 11 * 1024 * 1024 * 1024 //~11GB
   jest
     .spyOn(cacheUtils, 'getArchiveFileSizeInBytes')
     .mockReturnValueOnce(cacheSize)
@@ -63,7 +64,7 @@ test('save with large cache outputs should fail', async () => {
   expect(cacheId).toBe(-1)
   expect(logWarningMock).toHaveBeenCalledTimes(1)
   expect(logWarningMock).toHaveBeenCalledWith(
-    'Failed to save: Cache size of ~11264 MB (11811160064 B) is over the 10GB limit, not saving cache.'
+    'Failed to save: Cache size of ~11264 MB (11811160064 B) is over the data cap limit, not saving cache.'
   )
 
   const archiveFolder = '/foo/bar'
@@ -99,7 +100,7 @@ test('save with large cache outputs should fail in GHES with error message', asy
   const reserveCacheMock = jest
     .spyOn(cacheHttpClient, 'reserveCache')
     .mockImplementation(async () => {
-      const response: ITypedResponseWithError<ReserveCacheResponse> = {
+      const response: ITypedResponseWithError<CommonsReserveCacheResponse> = {
         statusCode: 400,
         result: null,
         headers: {},
@@ -151,7 +152,7 @@ test('save with large cache outputs should fail in GHES without error message', 
   const reserveCacheMock = jest
     .spyOn(cacheHttpClient, 'reserveCache')
     .mockImplementation(async () => {
-      const response: ITypedResponseWithError<ReserveCacheResponse> = {
+      const response: ITypedResponseWithError<CommonsReserveCacheResponse> = {
         statusCode: 400,
         result: null,
         headers: {}
@@ -181,14 +182,16 @@ test('save with reserve cache failure should fail', async () => {
   const paths = ['node_modules']
   const primaryKey = 'Linux-node-bb828da54c148048dd17899ba9fda624811cfb43'
   const logInfoMock = jest.spyOn(core, 'info')
+  const reserveError = 'Unable to reserve cache'
 
   const reserveCacheMock = jest
     .spyOn(cacheHttpClient, 'reserveCache')
     .mockImplementation(async () => {
-      const response: TypedResponse<ReserveCacheResponse> = {
+      const response: ITypedResponseWithError<CommonsReserveCacheResponse> = {
         statusCode: 500,
         result: null,
-        headers: {}
+        headers: {},
+        error: new HttpClientError(reserveError, 500)
       }
       return response
     })
@@ -203,16 +206,14 @@ test('save with reserve cache failure should fail', async () => {
   const cacheId = await saveCache(paths, primaryKey)
   expect(cacheId).toBe(-1)
   expect(logInfoMock).toHaveBeenCalledTimes(1)
-  expect(logInfoMock).toHaveBeenCalledWith(
-    `Failed to save: Unable to reserve cache with key ${primaryKey}, another job may be creating this cache. More details: undefined`
-  )
+  expect(logInfoMock).toHaveBeenCalledWith(`Failed to save: ${reserveError}`)
 
   expect(reserveCacheMock).toHaveBeenCalledTimes(1)
-  expect(reserveCacheMock).toHaveBeenCalledWith(primaryKey, paths, {
-    cacheSize: undefined,
-    compressionMethod: compression,
-    enableCrossOsArchive: false
-  })
+  expect(reserveCacheMock).toHaveBeenCalledWith(
+    primaryKey,
+    expect.any(Number),
+    expect.any(String)
+  )
   expect(createTarMock).toHaveBeenCalledTimes(1)
   expect(saveCacheMock).toHaveBeenCalledTimes(0)
   expect(getCompressionMock).toHaveBeenCalledTimes(1)
@@ -223,17 +224,18 @@ test('save with server error should fail', async () => {
   const primaryKey = 'Linux-node-bb828da54c148048dd17899ba9fda624811cfb43'
   const cachePaths = [path.resolve(filePath)]
   const logWarningMock = jest.spyOn(core, 'warning')
-  const cacheId = 4
   const reserveCacheMock = jest
     .spyOn(cacheHttpClient, 'reserveCache')
     .mockImplementation(async () => {
-      const response: TypedResponse<ReserveCacheResponse> = {
-        statusCode: 500,
-        result: {cacheId},
+      const response: TypedResponse<CommonsReserveCacheResponse> = {
+        statusCode: 200,
+        result: {provider: 's3'},
         headers: {}
       }
       return response
     })
+
+  jest.spyOn(cacheUtils, 'getArchiveFileSizeInBytes').mockReturnValue(1024)
 
   const createTarMock = jest.spyOn(tar, 'createTar')
 
@@ -254,11 +256,11 @@ test('save with server error should fail', async () => {
   )
 
   expect(reserveCacheMock).toHaveBeenCalledTimes(1)
-  expect(reserveCacheMock).toHaveBeenCalledWith(primaryKey, [filePath], {
-    cacheSize: undefined,
-    compressionMethod: compression,
-    enableCrossOsArchive: false
-  })
+  expect(reserveCacheMock).toHaveBeenCalledWith(
+    primaryKey,
+    expect.any(Number),
+    expect.any(String)
+  )
   const archiveFolder = '/foo/bar'
   const archiveFile = path.join(archiveFolder, CacheFilename.Zstd)
   expect(createTarMock).toHaveBeenCalledTimes(1)
@@ -268,7 +270,16 @@ test('save with server error should fail', async () => {
     compression
   )
   expect(saveCacheMock).toHaveBeenCalledTimes(1)
-  expect(saveCacheMock).toHaveBeenCalledWith(cacheId, archiveFile, undefined)
+  expect(saveCacheMock).toHaveBeenCalledWith(
+    's3',
+    primaryKey,
+    expect.any(String),
+    archiveFile,
+    '',
+    '',
+    expect.any(Number),
+    []
+  )
   expect(getCompressionMock).toHaveBeenCalledTimes(1)
 })
 
@@ -277,17 +288,29 @@ test('save with valid inputs uploads a cache', async () => {
   const primaryKey = 'Linux-node-bb828da54c148048dd17899ba9fda624811cfb43'
   const cachePaths = [path.resolve(filePath)]
 
-  const cacheId = 4
+  const uploadId = 'upload-id'
+  const uploadKey = 'upload-key'
+  const preSignedUrls = ['https://s3.test/part-1']
   const reserveCacheMock = jest
     .spyOn(cacheHttpClient, 'reserveCache')
     .mockImplementation(async () => {
-      const response: TypedResponse<ReserveCacheResponse> = {
-        statusCode: 500,
-        result: {cacheId},
+      const response: TypedResponse<CommonsReserveCacheResponse> = {
+        statusCode: 200,
+        result: {
+          provider: 's3',
+          s3: {
+            upload_id: uploadId,
+            upload_key: uploadKey,
+            pre_signed_urls: preSignedUrls
+          }
+        },
         headers: {}
       }
       return response
     })
+
+  jest.spyOn(cacheUtils, 'getArchiveFileSizeInBytes').mockReturnValue(1024)
+
   const createTarMock = jest.spyOn(tar, 'createTar')
 
   const saveCacheMock = jest.spyOn(cacheHttpClient, 'saveCache')
@@ -299,11 +322,11 @@ test('save with valid inputs uploads a cache', async () => {
   await saveCache([filePath], primaryKey)
 
   expect(reserveCacheMock).toHaveBeenCalledTimes(1)
-  expect(reserveCacheMock).toHaveBeenCalledWith(primaryKey, [filePath], {
-    cacheSize: undefined,
-    compressionMethod: compression,
-    enableCrossOsArchive: false
-  })
+  expect(reserveCacheMock).toHaveBeenCalledWith(
+    primaryKey,
+    expect.any(Number),
+    expect.any(String)
+  )
   const archiveFolder = '/foo/bar'
   const archiveFile = path.join(archiveFolder, CacheFilename.Zstd)
   expect(createTarMock).toHaveBeenCalledTimes(1)
@@ -313,7 +336,16 @@ test('save with valid inputs uploads a cache', async () => {
     compression
   )
   expect(saveCacheMock).toHaveBeenCalledTimes(1)
-  expect(saveCacheMock).toHaveBeenCalledWith(cacheId, archiveFile, undefined)
+  expect(saveCacheMock).toHaveBeenCalledWith(
+    's3',
+    primaryKey,
+    expect.any(String),
+    archiveFile,
+    uploadId,
+    uploadKey,
+    expect.any(Number),
+    preSignedUrls
+  )
   expect(getCompressionMock).toHaveBeenCalledTimes(1)
 })
 

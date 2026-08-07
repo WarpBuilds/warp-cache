@@ -1,3 +1,4 @@
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -30,13 +31,11 @@ export const $commons_CommitCacheRequest = {
         upload_id: {
             type: 'string',
             description: `UploadID
-
              * This is not supported for GCS cache. When passed this will be ignored. *`,
         },
         upload_key: {
             type: 'string',
             description: `UploadKey
-
              * This is not supported for GCS cache. When passed this will be ignored. *`,
         },
         vcs_ref: {

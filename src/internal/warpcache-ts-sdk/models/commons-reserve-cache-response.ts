@@ -15,13 +15,13 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsAzureBlobReserveCacheResponse } from './commons-azure-blob-reserve-cache-response';
+import { CommonsAzureBlobReserveCacheResponse } from './commons-azure-blob-reserve-cache-response.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsGCSReserveCacheResponse } from './commons-gcsreserve-cache-response';
+import { CommonsGCSReserveCacheResponse } from './commons-gcsreserve-cache-response.js';
 // May contain unused imports in some cases
 // @ts-ignore
-import { CommonsS3ReserveCacheResponse } from './commons-s3-reserve-cache-response';
+import { CommonsS3ReserveCacheResponse } from './commons-s3-reserve-cache-response.js';
 
 /**
  * 

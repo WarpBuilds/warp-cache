@@ -1,16 +1,22 @@
 import * as core from '@actions/core'
 import * as path from 'path'
-import * as utils from './internal/cacheUtils'
-import * as cacheHttpClient from './internal/cacheHttpClient'
+import * as utils from './internal/cacheUtils.js'
+import * as cacheHttpClient from './internal/cacheHttpClient.js'
 import {
   createTar,
   extractStreamingTar,
   extractTar,
   listTar
-} from './internal/tar'
-import {DownloadOptions, getUploadOptions} from './options'
-import {isSuccessStatusCode} from './internal/requestUtils'
-import {getDownloadCommandPipeForWget} from './internal/downloadUtils'
+} from './internal/tar.js'
+import {
+  DownloadOptions,
+  UploadOptions,
+  getDownloadOptions,
+  getUploadOptions
+} from './options.js'
+import {isSuccessStatusCode} from './internal/requestUtils.js'
+import {HttpClientError} from '@actions/http-client'
+import {getDownloadCommandPipeForWget} from './internal/downloadUtils.js'
 import {ChildProcessWithoutNullStreams} from 'child_process'
 
 export class ValidationError extends Error {
@@ -67,9 +73,9 @@ export function isFeatureAvailable(): boolean {
  * @param paths a list of file paths to restore from the cache
  * @param primaryKey an explicit key for restoring the cache
  * @param restoreKeys an optional ordered list of keys to use for restoring the cache if no cache hit occurred for key
- * @param downloadOptions cache download options
+ * @param options cache download options. Set enableCrossArchArchive here to
+ *                restore a cache saved on a different CPU architecture.
  * @param enableCrossOsArchive an optional boolean enabled to restore on windows any cache created on any platform
- * @param enableCrossArchArchive an optional boolean enabled to restore cache created on any arch
  * @returns string returns the key for the cache hit, otherwise returns undefined
  */
 export async function restoreCache(
@@ -77,9 +83,10 @@ export async function restoreCache(
   primaryKey: string,
   restoreKeys?: string[],
   options?: DownloadOptions,
-  enableCrossOsArchive = false,
-  enableCrossArchArchive = false
+  enableCrossOsArchive = false
 ): Promise<string | undefined> {
+  const enableCrossArchArchive =
+    getDownloadOptions(options).enableCrossArchArchive ?? false
   checkPaths(paths)
   checkKey(primaryKey)
 
@@ -124,6 +131,12 @@ export async function restoreCache(
     core.debug(`Archive Path: ${archivePath}`)
 
     const cacheKey = cacheEntry?.cache_entry?.cache_user_given_key ?? primaryKey
+
+    if (cacheKey !== primaryKey) {
+      core.info(`Cache hit for restore-key: ${cacheKey}`)
+    } else {
+      core.info(`Cache hit for: ${cacheKey}`)
+    }
 
     switch (cacheEntry.provider) {
       case 's3':
@@ -305,7 +318,16 @@ export async function restoreCache(
       throw error
     } else {
       // Suppress all non-validation cache related errors because caching should be optional
-      core.warning(`Failed to restore: ${(error as Error).message}`)
+      // Log server errors (5xx) as errors, all other errors as warnings.
+      if (
+        typedError instanceof HttpClientError &&
+        typeof typedError.statusCode === 'number' &&
+        typedError.statusCode >= 500
+      ) {
+        core.error(`Failed to restore: ${(error as Error).message}`)
+      } else {
+        core.warning(`Failed to restore: ${(error as Error).message}`)
+      }
     }
   } finally {
     // Try to delete the archive to save space
@@ -324,18 +346,25 @@ export async function restoreCache(
  *
  * @param paths a list of file paths to be cached
  * @param key an explicit key for restoring the cache
+ * @param options cache upload options. Set enableCrossArchArchive here to save
+ *                a cache restorable on a different CPU architecture.
  * @param enableCrossOsArchive an optional boolean enabled to save cache on windows which could be restored on any platform
- * @param enableCrossArchArchive an optional boolean enabled to save cache on any arch which could be restored on any arch
- * @returns string returns cacheId if the cache was saved successfully and throws an error if save fails
+ * @returns number a positive id if the cache was saved, or -1 if it was not.
+ *          The service keys caches by string, so the id carries no meaning
+ *          beyond success; it matches @actions/cache v6 so upstream callers
+ *          that test `!== -1` work unchanged.
  */
 export async function saveCache(
   paths: string[],
   key: string,
-  enableCrossOsArchive = false,
-  enableCrossArchArchive = false
-): Promise<string> {
+  options?: UploadOptions,
+  enableCrossOsArchive = false
+): Promise<number> {
   checkPaths(paths)
   checkKey(key)
+
+  const enableCrossArchArchive =
+    getUploadOptions(options).enableCrossArchArchive ?? false
 
   const compressionMethod = await utils.getCompressionMethod()
 
@@ -384,7 +413,7 @@ export async function saveCache(
 
     core.debug('Reserving Cache')
     // Calculate number of chunks required. This is only required if backend is S3 as Google Cloud SDK will do it for us
-    const uploadOptions = getUploadOptions()
+    const uploadOptions = getUploadOptions(options)
     const maxChunkSize = uploadOptions?.uploadChunkSize ?? 32 * 1024 * 1024 // Default 32MB
     const numberOfChunks = Math.max(
       Math.floor(archiveFileSize / maxChunkSize),
@@ -405,12 +434,18 @@ export async function saveCache(
           cacheVersion
         })}`
       )
-      throw new Error(
-        reserveCacheResponse?.error?.message ??
-          `Cache size of ~${Math.round(
-            archiveFileSize / (1024 * 1024)
-          )} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`
-      )
+      if (
+        reserveCacheResponse?.statusCode === 400 ||
+        !reserveCacheResponse?.error?.message
+      ) {
+        throw new Error(
+          reserveCacheResponse?.error?.message ??
+            `Cache size of ~${Math.round(
+              archiveFileSize / (1024 * 1024)
+            )} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`
+        )
+      }
+      throw new ReserveCacheError(reserveCacheResponse.error.message)
     }
 
     switch (reserveCacheResponse.result?.provider) {
@@ -485,7 +520,8 @@ export async function saveCache(
     }
   }
 
-  return cacheKey
+  // cacheKey stays empty when the save was skipped or failed non-fatally.
+  return cacheKey === '' ? -1 : 1
 }
 
 /**

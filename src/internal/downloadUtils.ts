@@ -6,12 +6,11 @@ import * as fs from 'fs'
 import * as stream from 'stream'
 import * as util from 'util'
 
-import * as utils from './cacheUtils'
-import {SocketTimeout} from './constants'
-import {DownloadOptions} from '../options'
-import {retryHttpClientResponse} from './requestUtils'
+import * as utils from './cacheUtils.js'
+import {SocketTimeout} from './constants.js'
+import {DownloadOptions} from '../options.js'
+import {retryHttpClientResponse} from './requestUtils.js'
 
-import {AbortController} from '@azure/abort-controller'
 import {Storage, TransferManager} from '@google-cloud/storage'
 import {ChildProcessWithoutNullStreams, spawn} from 'child_process'
 

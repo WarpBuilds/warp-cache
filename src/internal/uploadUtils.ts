@@ -1,11 +1,11 @@
 import * as core from '@actions/core'
-import * as utils from './cacheUtils'
+import * as utils from './cacheUtils.js'
 import * as os from 'os'
 
 import fs from 'fs'
 
 import axios, {AxiosError} from 'axios'
-import {InternalS3CompletedPart} from './contracts'
+import {InternalS3CompletedPart} from './contracts.js'
 
 import {Storage, TransferManager} from '@google-cloud/storage'
 

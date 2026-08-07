@@ -4,8 +4,8 @@ import {
   PushEvent,
   PullRequestEvent,
   WorkflowDispatchEvent
-} from '@octokit/webhooks-definitions/schema'
-import {HttpClient} from '@actions/http-client'
+} from '@octokit/webhooks-types'
+import {HttpClient, HttpClientError} from '@actions/http-client'
 import {BearerCredentialHandler} from '@actions/http-client/lib/auth'
 import {
   RequestOptions,
@@ -13,22 +13,22 @@ import {
 } from '@actions/http-client/lib/interfaces'
 import * as crypto from 'crypto'
 
-import * as utils from './cacheUtils'
-import {CompressionMethod} from './constants'
+import * as utils from './cacheUtils.js'
+import {CompressionMethod} from './constants.js'
 import os from 'os'
 import {
   InternalCacheOptions,
   ITypedResponseWithError,
   InternalS3CompletedPart
-} from './contracts'
+} from './contracts.js'
 import {
   downloadCacheGCP,
   downloadCacheHttpClientConcurrent,
   downloadCacheMultiConnection,
   downloadCacheMultipartGCP,
   downloadCacheStreamingGCP
-} from './downloadUtils'
-import {isSuccessStatusCode, retryTypedResponse} from './requestUtils'
+} from './downloadUtils.js'
+import {isSuccessStatusCode, retryTypedResponse} from './requestUtils.js'
 import {Storage} from '@google-cloud/storage'
 import {
   CommonsCommitCacheRequest,
@@ -37,10 +37,10 @@ import {
   CommonsGetCacheResponse,
   CommonsReserveCacheRequest,
   CommonsReserveCacheResponse
-} from './warpcache-ts-sdk'
-import {multiPartUploadToGCS, uploadFileToS3} from './uploadUtils'
-import {CommonsGetCacheRequest} from './warpcache-ts-sdk/models/commons-get-cache-request'
-import {CommonsDeleteCacheRequest} from './warpcache-ts-sdk/models/commons-delete-cache-request'
+} from './warpcache-ts-sdk/index.js'
+import {multiPartUploadToGCS, uploadFileToS3} from './uploadUtils.js'
+import {CommonsGetCacheRequest} from './warpcache-ts-sdk/models/commons-get-cache-request.js'
+import {CommonsDeleteCacheRequest} from './warpcache-ts-sdk/models/commons-delete-cache-request.js'
 import {OAuth2Client} from 'google-auth-library'
 import {BlockBlobClient} from '@azure/storage-blob'
 
@@ -178,11 +178,9 @@ export async function getCacheEntry(
         )
 
         // If head points to a different repository, add it to restoreRepos. We allow restores from head repos as well.
-        if (
-          pullPayload?.pull_request?.head?.repo?.name !==
-          pullPayload?.repository?.name
-        ) {
-          restoreRepos.add(pullPayload?.pull_request?.head?.repo?.name)
+        const headRepoName = pullPayload?.pull_request?.head?.repo?.name
+        if (headRepoName && headRepoName !== pullPayload?.repository?.name) {
+          restoreRepos.add(headRepoName)
         }
       }
       break
@@ -214,15 +212,15 @@ export async function getCacheEntry(
     )
   )
 
-  if (response.statusCode === 204) {
-    // TODO: List cache for primary key only if cache miss occurs
-    // if (core.isDebug()) {
-    //   await printCachesListForDiagnostics(keys[0], httpClient, version)
-    // }
+  if (response.statusCode === 204 || response.statusCode === 404) {
+    core.debug(`No cache entry for key '${key}' with version '${version}'`)
     return null
   }
   if (!isSuccessStatusCode(response.statusCode)) {
-    throw new Error(`Cache service responded with ${response.statusCode}`)
+    throw new HttpClientError(
+      `Cache service responded with ${response.statusCode}`,
+      response.statusCode
+    )
   }
 
   const cacheResult = response.result
